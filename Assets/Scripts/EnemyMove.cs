@@ -9,12 +9,14 @@ public class EnemyMove : MonoBehaviour
     public float speed;
     Animator animator;
     SpriteRenderer spriteRenderer;
+    CapsuleCollider2D capsuleCollider2D;
 
     private void Awake()
     {
         rigid = GetComponent<Rigidbody2D>();
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+        capsuleCollider2D = GetComponent<CapsuleCollider2D>();
 
         Invoke("Think", 3);
     }
@@ -27,11 +29,34 @@ public class EnemyMove : MonoBehaviour
         // Platform Check
         Vector2 frontVector = new Vector2(rigid.position.x + nextMove * 0.5f, rigid.position.y);
         Debug.DrawRay(frontVector, Vector3.down, new Color(1, 0, 0));
-        RaycastHit2D rayHit = Physics2D.Raycast(frontVector, Vector2.down, 1, LayerMask.GetMask("Platform"));
+        RaycastHit2D rayHit = Physics2D.Raycast(frontVector, Vector2.down, 1.5f, LayerMask.GetMask("Platform"));
         if (rayHit.collider == null)
         {
             Turn();
         }
+    }
+
+    public void OnDamaged()
+    {
+        // Sprite Alpha
+        spriteRenderer.color = new Color(1, 1, 1, 0.4f);
+
+        // Sprite Flip y
+        spriteRenderer.flipY = true;
+
+        // Collider Diasble
+        capsuleCollider2D.enabled = false;
+
+        // Die Effect Jump
+        rigid.AddForce(Vector2.up * 3.0f, ForceMode2D.Impulse);
+
+        // Destroy
+        Invoke("DeActive", 1);
+    }
+
+    void DeActive()
+    {
+        gameObject.SetActive(false);
     }
 
     private void Think()

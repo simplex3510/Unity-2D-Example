@@ -4,6 +4,12 @@ using UnityEngine;
 
 public class PlayerMove : MonoBehaviour
 {
+    public AudioClip audioJump;
+    public AudioClip audioAttack;
+    public AudioClip audioDamaged;
+    public AudioClip audioItem;
+    public AudioClip audioDie;
+    public AudioClip audioFinish;
     public GameManager gameManager;
     public float maxSpeed;
     public float jumpPower;
@@ -11,6 +17,8 @@ public class PlayerMove : MonoBehaviour
     SpriteRenderer spriteRenderer;
     Animator animator;
     CapsuleCollider2D capsuleCollider2D;
+    AudioSource audioSource;
+
 
     private void Awake()
     {
@@ -18,6 +26,7 @@ public class PlayerMove : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
         capsuleCollider2D = GetComponent<CapsuleCollider2D>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     private void Update()
@@ -27,6 +36,7 @@ public class PlayerMove : MonoBehaviour
         {
             rigid.AddForce(Vector2.up * jumpPower, ForceMode2D.Impulse);
             animator.SetBool("isJump", true);
+            PlaySound("Jump");
         }
 
         if (Input.GetButtonUp("Horizontal"))
@@ -102,6 +112,8 @@ public class PlayerMove : MonoBehaviour
 
     void OnAttack(Transform enemy)
     {
+        PlaySound("Attack");
+
         // Point
         gameManager.stagePoint += 100;
 
@@ -137,17 +149,21 @@ public class PlayerMove : MonoBehaviour
 
             // Deactive Item
             other.gameObject.SetActive(false);
+            PlaySound("Item");
         }
         else if (other.gameObject.tag == "Finish")
         {
             // Next Stage
-            gameManager.NextStage(); 
+            gameManager.NextStage();
+            PlaySound("Finish");
         }
 
     }
 
     void OnDamaged(Vector2 targetPosition)
     {
+        PlaySound("Damaged");
+
         // Health Down
         gameManager.HealthDown();
 
@@ -176,9 +192,37 @@ public class PlayerMove : MonoBehaviour
         spriteRenderer.color = new Color(1, 1, 1, 1);
     }
 
+    void PlaySound(string audio)
+    {
+        switch (audio)
+        {
+            case "Jump":
+                audioSource.clip = audioJump;
+                break;
+            case "Attack":
+                audioSource.clip = audioAttack;
+                break;
+            case "Damaged":
+                audioSource.clip = audioDamaged;
+                break;
+            case "Item":
+                audioSource.clip = audioItem;
+                break;
+            case "Die":
+                audioSource.clip = audioDie;
+                break;
+            case "Finish":
+                audioSource.clip = audioFinish;
+                break;
+        }
+        audioSource.Play();
+    }
+
     public void OnDie()
     {
-         // Sprite Alpha
+        PlaySound("Die");
+
+        // Sprite Alpha
         spriteRenderer.color = new Color(1, 1, 1, 0.4f);
 
         // Sprite Flip y

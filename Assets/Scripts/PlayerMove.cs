@@ -4,17 +4,20 @@ using UnityEngine;
 
 public class PlayerMove : MonoBehaviour
 {
+    public GameManager gameManager;
     public float maxSpeed;
     public float jumpPower;
     Rigidbody2D rigid;
     SpriteRenderer spriteRenderer;
     Animator animator;
+    CapsuleCollider2D capsuleCollider2D;
 
     private void Awake()
     {
         rigid = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
+        capsuleCollider2D = GetComponent<CapsuleCollider2D>();
     }
 
     private void Update()
@@ -86,7 +89,7 @@ public class PlayerMove : MonoBehaviour
         if (other.gameObject.tag == "Enemy")
         {
             // Attack
-            if(rigid.velocity.y < 0 && transform.position.y > other.transform.position.y)
+            if (rigid.velocity.y < 0 && transform.position.y > other.transform.position.y)
             {
                 OnAttack(other.transform);
             }
@@ -99,6 +102,9 @@ public class PlayerMove : MonoBehaviour
 
     void OnAttack(Transform enemy)
     {
+        // Point
+        gameManager.stagePoint += 100;
+
         // Reaction Force
         rigid.AddForce(Vector2.up * 12, ForceMode2D.Impulse);
 
@@ -107,8 +113,44 @@ public class PlayerMove : MonoBehaviour
         enemyMove.OnDamaged();
     }
 
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.gameObject.tag == "Item")
+        {
+            // Point
+            bool isBronze = other.gameObject.name.Contains("Bronze");
+            bool isSilver = other.gameObject.name.Contains("Silver");
+            bool isGold = other.gameObject.name.Contains("Gold");
+
+            if (isBronze)
+            {
+                gameManager.stagePoint += 50;
+            }
+            else if (isSilver)
+            {
+                gameManager.stagePoint += 70;
+            }
+            else if (isGold)
+            {
+                gameManager.stagePoint += 100;
+            }
+
+            // Deactive Item
+            other.gameObject.SetActive(false);
+        }
+        else if (other.gameObject.tag == "Finish")
+        {
+            // Next Stage
+            gameManager.NextStage(); 
+        }
+
+    }
+
     void OnDamaged(Vector2 targetPosition)
     {
+        // Health Down
+        gameManager.HealthDown();
+
         // Change Layer
         gameObject.layer = 9;
 
@@ -117,7 +159,7 @@ public class PlayerMove : MonoBehaviour
 
         // Reaction Force
         int dirc = transform.position.x - targetPosition.x > 0 ? 1 : -1;
-        rigid.AddForce(new Vector2(dirc, 1)*7, ForceMode2D.Impulse);
+        rigid.AddForce(new Vector2(dirc, 1) * 7, ForceMode2D.Impulse);
 
         // Animation
         animator.SetTrigger("doDamaged");
@@ -133,4 +175,25 @@ public class PlayerMove : MonoBehaviour
         // View Alpha
         spriteRenderer.color = new Color(1, 1, 1, 1);
     }
+
+    public void OnDie()
+    {
+         // Sprite Alpha
+        spriteRenderer.color = new Color(1, 1, 1, 0.4f);
+
+        // Sprite Flip y
+        spriteRenderer.flipY = true;
+
+        // Collider Diasble
+        capsuleCollider2D.enabled = false;
+
+        // Die Effect Jump
+        rigid.AddForce(Vector2.up * 3.0f, ForceMode2D.Impulse);
+    }
+
+    public void VelocityZero()
+    {
+        rigid.velocity = Vector2.zero;
+    }
+
 }
